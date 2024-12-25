@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:ui/app/ui/pages/generator/generator_controller.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:clipboard/clipboard.dart';
+import 'package:ui/app/ui/widgets/badge.dart';
 
 class GeneratorPage extends GetView<GeneratorController> {
   const GeneratorPage({Key? key}) : super(key: key);
@@ -100,7 +101,19 @@ class GeneratorPage extends GetView<GeneratorController> {
             ),
             const SizedBox(height: 8),
             SelectableText(controller.getBadgeURL()),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
+            if (controller.selectedItem.value != null) ...[
+              const Text(
+                "Preview:",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              KubeBadgeView(
+                badge: controller.selectedItem.value!,
+                onTap: () {}, // No action needed on tap for preview
+              ),
+              const SizedBox(height: 16),
+            ],
             ElevatedButton(
               onPressed: () {
                 final text = controller.getBadgeURL();

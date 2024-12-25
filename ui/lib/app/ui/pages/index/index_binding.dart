@@ -9,5 +9,6 @@ class IndexBinding implements Bindings {
     Get.lazyPut<IndexController>(() => IndexController());
     Get.lazyPut<BadgeController>(() => BadgeController());
     Get.lazyPut<SettingsController>(() => SettingsController());
+    Get.lazyPut<GeneratorController>(() => GeneratorController());
   }
 }

@@ -74,4 +74,7 @@ class AppService extends GetxService {
 
   Future<Response> updateBadge(Map<String, dynamic> data) =>
       api.updateBadge(data);
+
+  Future<Response<List<KubeBadge>>> listKustomizations(String namespace, bool force) =>
+      api.listKustomizations(namespace, force);
 }

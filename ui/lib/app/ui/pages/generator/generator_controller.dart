@@ -53,10 +53,8 @@ class GeneratorController extends GetxController {
       }
     } else if (resourceType.value == ResourceType.kustomization) {
       if (namespace.value.isEmpty) return;
-      final resp = await appService.get('/api/kustomizations/${namespace.value}', decoder: (data) {
-        return (data as List).map((e) => KubeBadge.fromJson(e)).toList();
-      });
-      if (!resp.hasError) {
+      final resp = await appService.listKustomizations(namespace.value, false);
+      if (!resp.status.hasError) {
         resourceList.assignAll(resp.body!);
       }
     }

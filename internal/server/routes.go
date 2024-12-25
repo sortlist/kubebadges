@@ -94,6 +94,9 @@ func (s *Server) initRouter() {
 		api.POST("/badge", kubeController.UpdateBadge)
 		api.GET("/config", kubeController.GetConfig)
 		api.POST("/config", kubeController.UpdateConfig)
+
+		// ADDED for Kustomization listing (optionnel si on veut lister) :
+		api.GET("/kustomizations/:namespace", kubeController.ListKustomizations)
 	}
 
 	badges := s.internalEngine.Group("/badges")
@@ -103,6 +106,9 @@ func (s *Server) initRouter() {
 		badges.GET("/kube/namespace/:namespace", badgesController.Namespace)
 		badges.GET("/kube/deployment/:namespace/:deployment", badgesController.Deployment)
 		badges.GET("/kube/pod/:namespace/:pod", badgesController.Pod)
+
+		// ADDED for Kustomization
+		badges.GET("/kube/kustomization/:namespace/:kustomization", badgesController.Kustomization)
 	}
 
 	// for external api
@@ -112,11 +118,12 @@ func (s *Server) initRouter() {
 	s.externalEngine.Use(middleware.BadgeApiAccessMiddleware(s.svcCtx.KubeBadgesService))
 	exBadges := s.externalEngine.Group("/badges")
 	{
-		// badges routes
 		exBadges.GET("/kube/node/:node", badgesController.Node)
 		exBadges.GET("/kube/namespace/:namespace", badgesController.Namespace)
 		exBadges.GET("/kube/deployment/:namespace/:deployment", badgesController.Deployment)
 		exBadges.GET("/kube/pod/:namespace/:pod", badgesController.Pod)
-	}
 
+		// ADDED for Kustomization
+		exBadges.GET("/kube/kustomization/:namespace/:kustomization", badgesController.Kustomization)
+	}
 }

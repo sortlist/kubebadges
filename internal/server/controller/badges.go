@@ -12,8 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func (b *BaseController) Success(c *gin.Context, badgeMessage BadgeMessage) {
-	if kubeBadge, err := kubeBadgesService.GetKubeBadge(badgeMessage.Key, false); err == nil {
+// Success method removed since it's now in base.go
 		if len(kubeBadge.Spec.DisplayName) > 0 {
 			badgeMessage.Label = kubeBadge.Spec.DisplayName
 		}
@@ -142,7 +141,7 @@ func (s *BadgesController) Namespace(c *gin.Context) {
 		s.namespaceCache.Set(name, badgeMessage, s.getCacheDuration())
 	}
 
-	s.Success(c, s.KubeBadgesService, badgeMessage)
+	s.Success(c, badgeMessage)
 }
 
 // Deployment badge
@@ -203,7 +202,7 @@ func (s *BadgesController) Deployment(c *gin.Context) {
 		s.deploymentCache.Set(fmt.Sprintf("%s_%s", namespace, deploymentName), badgeMessage, s.getCacheDuration())
 	}
 
-	s.Success(c, s.KubeBadgesService, badgeMessage)
+	s.Success(c, badgeMessage)
 }
 
 // Pod badge
@@ -242,7 +241,7 @@ func (s *BadgesController) Pod(c *gin.Context) {
 		s.podCache.Set(fmt.Sprintf("%s_%s", namespace, podName), badgeMessage, s.getCacheDuration())
 	}
 
-	s.Success(c, s.KubeBadgesService, badgeMessage)
+	s.Success(c, badgeMessage)
 }
 
 func (s *BadgesController) Kustomization(c *gin.Context) {
@@ -297,5 +296,5 @@ func (s *BadgesController) Kustomization(c *gin.Context) {
 		s.kustomizationCache.Set(key, badgeMessage, s.getCacheDuration())
 	}
 
-	s.Success(c, s.KubeBadgesService, badgeMessage)
+	s.Success(c, badgeMessage)
 }

@@ -41,7 +41,12 @@ class DefaultPage extends GetView<BadgeController> {
                 return BadgeCard(
                   items: namespace.value,
                   kubeBadge: namespace.key,
-                  onTap: (e) {
+                  onTap: (e) async {
+                    var deployments = await controller.appService.listDeployments(namespace.key.name, false);
+                    if (!deployments.status.hasError && deployments.body!.isNotEmpty) {
+                      controller.namespaceList[namespace.key] = deployments.body!;
+                      controller.namespaceList.refresh();
+                    }
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {

@@ -37,21 +37,9 @@ class BadgeController extends GetxController {
     namespaceList.clear();
     var namespaces = await appService.listNamespace(force);
     if (!namespaces.status.hasError) {
-      var temp = <KubeBadge, List<KubeBadge>>{};
-      var deploymentsRequests = <Future>[];
       for (var namespace in namespaces.body!) {
-        deploymentsRequests.add(
-          appService.listDeployments(namespace.name, force).then((deployments) {
-            if (!deployments.status.hasError) {
-              if (deployments.body!.isNotEmpty) {
-                temp[namespace] = deployments.body!;
-              }
-            }
-          }),
-        );
+        namespaceList[namespace] = [];
       }
-      await Future.wait(deploymentsRequests);
-      namespaceList = temp;
     }
     EasyLoading.dismiss();
   }

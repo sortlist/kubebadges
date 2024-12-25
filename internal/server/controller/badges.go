@@ -24,11 +24,9 @@ type BadgesController struct {
 	kustomizationCache *cache.Cache[string, BadgeMessage]
 }
 
-func NewBadgesController(svc *svc.ServerContext) *BadgesController {
+func NewBadgesController(base *BaseController) *BadgesController {
 	return &BadgesController{
-		BaseController: BaseController{
-			ServerContext: svc,
-		},
+		BaseController: *base,
 		namespaceCache:     cache.NewCache[string, BadgeMessage](),
 		deploymentCache:    cache.NewCache[string, BadgeMessage](),
 		nodeCache:          cache.NewCache[string, BadgeMessage](),

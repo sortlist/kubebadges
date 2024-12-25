@@ -44,4 +44,10 @@ class Api extends GetConnect {
       return KubeBadgeConfig.fromJson(data);
     });
   }
+
+  Future<Response<List<KubeBadge>>> listKustomizations(String namespace, bool force) {
+    return get('/api/kustomizations/$namespace?force=$force', decoder: (data) {
+      return (data as List).map((item) => KubeBadge.fromJson(item)).toList();
+    });
+  }
 }

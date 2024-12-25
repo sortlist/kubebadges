@@ -112,7 +112,7 @@ func (s *Server) initRouter() {
 
 	// for external api
 	s.externalEngine.NoRoute(func(ctx *gin.Context) {
-		baseController.NotFound(ctx)
+		baseCtrl.NotFound(ctx)
 	})
 	s.externalEngine.Use(middleware.BadgeApiAccessMiddleware(s.svcCtx.KubeBadgesService))
 	exBadges := s.externalEngine.Group("/badges")

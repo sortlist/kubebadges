@@ -12,35 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// BadgeMessage structure
-type BadgeMessage struct {
-	Key          string
-	Label        string
-	Message      string
-	MessageColor string
-}
-
-type BaseController struct {
-	*svc.ServerContext
-}
-
-var notFoundSvg = `
-<svg xmlns="http://www.w3.org/2000/svg" ...> ... </svg>
-`
-
-func (b *BaseController) NotFound(c *gin.Context) {
-	resultType := c.DefaultQuery("type", "svg")
-	if resultType == "json" {
-		c.Header("Content-Type", "application/json")
-		c.AbortWithStatus(404)
-		return
-	}
-
-	c.Header("Content-Type", "image/svg+xml")
-	c.String(404, notFoundSvg)
-}
-
-func (b *BaseController) Success(c *gin.Context, kubeBadgesService *svc.KubeBadgesService, badgeMessage BadgeMessage) {
+func (b *BaseController) Success(c *gin.Context, badgeMessage BadgeMessage) {
 	if kubeBadge, err := kubeBadgesService.GetKubeBadge(badgeMessage.Key, false); err == nil {
 		if len(kubeBadge.Spec.DisplayName) > 0 {
 			badgeMessage.Label = kubeBadge.Spec.DisplayName
@@ -139,7 +111,7 @@ func (s *BadgesController) Node(c *gin.Context) {
 		s.nodeCache.Set(name, badgeMessage, s.getCacheDuration())
 	}
 
-	s.Success(c, s.KubeBadgesService, badgeMessage)
+	s.Success(c, badgeMessage)
 }
 
 // Namespace badge

@@ -32,7 +32,6 @@ import (
 	}
 
 	b.BadgesHelper.CreateBadgeProxy(badge, c)
-}
 
 // =============================================================
 // BadgesController

@@ -16,3 +16,11 @@ rules:
       - ""
     resources:
       - configmaps
+  - verbs:
+      - get
+      - list
+      - watch
+    apiGroups:
+      - kustomize.toolkit.fluxcd.io
+    resources:
+      - kustomizations

@@ -206,7 +206,7 @@ func (s *KubeController) parseKey(key string) (resourceType string, namespace st
 		resourceType = "pod"
 		namespace = segments[3]
 		name = segments[4]
-	case "kustomization": // ADDED
+	case "kustomization":
 		resourceType = "kustomization"
 		namespace = segments[3]
 		name = segments[4]
@@ -263,7 +263,6 @@ func (s *KubeController) mapToConfig(configMap map[string]string) *model.KubeBad
 	return &config
 }
 
-// ADDED for Kustomization listing
 func (s *KubeController) ListKustomizations(c *gin.Context) {
 	namespace := c.Param("namespace")
 	key := fmt.Sprintf("kustomizations_%s", namespace)

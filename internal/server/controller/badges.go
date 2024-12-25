@@ -12,27 +12,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// Success method removed since it's now in base.go
-	badge := badges.NewBadgeBuilder().
-		SetLabel(badgeMessage.Label).
-		SetMessage(badgeMessage.Message).
-		SetMessageColor(badgeMessage.MessageColor).
-		SetStyle(c.Query("style")).
-		Build()
-
-	resultType := c.DefaultQuery("type", "svg")
-	if resultType == "json" {
-		c.Header("Content-Type", "application/json")
-		c.JSON(200, gin.H{
-			"label":   badge.Label,
-			"message": badge.Message,
-			"color":   badge.MessageColor,
-		})
-		return
-	}
-
-	b.BadgesHelper.CreateBadgeProxy(badge, c)
-
 // =============================================================
 // BadgesController
 // =============================================================

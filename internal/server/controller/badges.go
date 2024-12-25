@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kubebadges/kubebadges/internal/badges"
 	"github.com/kubebadges/kubebadges/internal/cache"
-	"github.com/kubebadges/kubebadges/internal/server/svc"
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )

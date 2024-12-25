@@ -12,12 +12,73 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+// BadgeMessage structure
+type BadgeMessage struct {
+	Key          string
+	Label        string
+	Message      string
+	MessageColor string
+}
+
+type BaseController struct {
+	*svc.ServerContext
+}
+
+var notFoundSvg = `
+<svg xmlns="http://www.w3.org/2000/svg" ...> ... </svg>
+`
+
+func (b *BaseController) NotFound(c *gin.Context) {
+	resultType := c.DefaultQuery("type", "svg")
+	if resultType == "json" {
+		c.Header("Content-Type", "application/json")
+		c.AbortWithStatus(404)
+		return
+	}
+
+	c.Header("Content-Type", "image/svg+xml")
+	c.String(404, notFoundSvg)
+}
+
+func (b *BaseController) Success(c *gin.Context, kubeBadgesService *svc.KubeBadgesService, badgeMessage BadgeMessage) {
+	if kubeBadge, err := kubeBadgesService.GetKubeBadge(badgeMessage.Key, false); err == nil {
+		if len(kubeBadge.Spec.DisplayName) > 0 {
+			badgeMessage.Label = kubeBadge.Spec.DisplayName
+		}
+	}
+
+	badge := badges.NewBadgeBuilder().
+		SetLabel(badgeMessage.Label).
+		SetMessage(badgeMessage.Message).
+		SetMessageColor(badgeMessage.MessageColor).
+		SetStyle(c.Query("style")).
+		Build()
+
+	resultType := c.DefaultQuery("type", "svg")
+	if resultType == "json" {
+		c.Header("Content-Type", "application/json")
+		c.JSON(200, gin.H{
+			"label":   badge.Label,
+			"message": badge.Message,
+			"color":   badge.MessageColor,
+		})
+		return
+	}
+
+	b.BadgesHelper.CreateBadgeProxy(badge, c)
+}
+
+// =============================================================
+// BadgesController
+// =============================================================
 type BadgesController struct {
 	BaseController
 	namespaceCache  *cache.Cache[string, BadgeMessage]
 	deploymentCache *cache.Cache[string, BadgeMessage]
 	nodeCache       *cache.Cache[string, BadgeMessage]
 	podCache        *cache.Cache[string, BadgeMessage]
+	// ADDED for Kustomization
+	kustomizationCache *cache.Cache[string, BadgeMessage]
 }
 
 func NewBadgesController(svc *svc.ServerContext) *BadgesController {
@@ -25,13 +86,19 @@ func NewBadgesController(svc *svc.ServerContext) *BadgesController {
 		BaseController: BaseController{
 			ServerContext: svc,
 		},
-		namespaceCache:  cache.NewCache[string, BadgeMessage](),
-		deploymentCache: cache.NewCache[string, BadgeMessage](),
-		nodeCache:       cache.NewCache[string, BadgeMessage](),
-		podCache:        cache.NewCache[string, BadgeMessage](),
+		namespaceCache:     cache.NewCache[string, BadgeMessage](),
+		deploymentCache:    cache.NewCache[string, BadgeMessage](),
+		nodeCache:          cache.NewCache[string, BadgeMessage](),
+		podCache:           cache.NewCache[string, BadgeMessage](),
+		kustomizationCache: cache.NewCache[string, BadgeMessage](), // ADDED
 	}
 }
 
+func (s *BadgesController) getCacheDuration() time.Duration {
+	return time.Duration(s.Config.CacheTime) * time.Second
+}
+
+// Node badge
 func (s *BadgesController) Node(c *gin.Context) {
 	name := c.Param("node")
 	badgeMessage, ok := s.nodeCache.Get(name)
@@ -76,6 +143,7 @@ func (s *BadgesController) Node(c *gin.Context) {
 	s.Success(c, s.KubeBadgesService, badgeMessage)
 }
 
+// Namespace badge
 func (s *BadgesController) Namespace(c *gin.Context) {
 	name := c.Param("namespace")
 	badgeMessage, ok := s.namespaceCache.Get(name)
@@ -106,6 +174,7 @@ func (s *BadgesController) Namespace(c *gin.Context) {
 	s.Success(c, s.KubeBadgesService, badgeMessage)
 }
 
+// Deployment badge
 func (s *BadgesController) Deployment(c *gin.Context) {
 	namespace := c.Param("namespace")
 	deploymentName := c.Param("deployment")
@@ -160,12 +229,13 @@ func (s *BadgesController) Deployment(c *gin.Context) {
 		}
 
 		badgeMessage.Message = fmt.Sprintf("%d/%d %s", deployment.Status.AvailableReplicas, deployment.Status.Replicas, statusMessage)
-		s.namespaceCache.Set(fmt.Sprintf("%s_%s", namespace, deploymentName), badgeMessage, s.getCacheDuration())
+		s.deploymentCache.Set(fmt.Sprintf("%s_%s", namespace, deploymentName), badgeMessage, s.getCacheDuration())
 	}
 
 	s.Success(c, s.KubeBadgesService, badgeMessage)
 }
 
+// Pod badge
 func (s *BadgesController) Pod(c *gin.Context) {
 	namespace := c.Param("namespace")
 	podName := c.Param("pod")
@@ -204,6 +274,58 @@ func (s *BadgesController) Pod(c *gin.Context) {
 	s.Success(c, s.KubeBadgesService, badgeMessage)
 }
 
-func (s *BadgesController) getCacheDuration() time.Duration {
-	return time.Duration(s.Config.CacheTime) * time.Second
+// ADDED for Kustomization
+func (s *BadgesController) Kustomization(c *gin.Context) {
+	namespace := c.Param("namespace")
+	kustomizationName := c.Param("kustomization")
+
+	key := fmt.Sprintf("/kube/kustomization/%s/%s", namespace, kustomizationName)
+	badgeMessage, ok := s.kustomizationCache.Get(key)
+	if !ok {
+		kustomization, err := s.KubeHelper.GetKustomization(namespace, kustomizationName)
+		if err != nil {
+			s.NotFound(c)
+			return
+		}
+
+		// On va parser le .status.conditions pour voir si c'est "Ready"
+		label := kustomizationName
+		message := "Unknown"
+		messageColor := badges.Blue
+
+		statusObj, hasStatus := kustomization["status"].(map[string]interface{})
+		if hasStatus {
+			if conditions, ok := statusObj["conditions"].([]interface{}); ok {
+				for _, cnd := range conditions {
+					cMap, ok := cnd.(map[string]interface{})
+					if !ok {
+						continue
+					}
+					cType, _ := cMap["type"].(string)
+					cStatus, _ := cMap["status"].(string)
+					if cType == "Ready" {
+						if cStatus == "True" {
+							message = "Ready"
+							messageColor = badges.Green
+						} else {
+							message = "NotReady"
+							messageColor = badges.Red
+						}
+						break
+					}
+				}
+			}
+		}
+
+		badgeMessage = BadgeMessage{
+			Key:          key,
+			Label:        label,
+			Message:      message,
+			MessageColor: messageColor,
+		}
+
+		s.kustomizationCache.Set(key, badgeMessage, s.getCacheDuration())
+	}
+
+	s.Success(c, s.KubeBadgesService, badgeMessage)
 }

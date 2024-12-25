@@ -9,15 +9,26 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
 
+// ADDED for Kustomization
+// GVR pour kustomizations FluxCD
+var kustomizationGVR = schema.GroupVersionResource{
+	Group:    "kustomize.toolkit.fluxcd.io",
+	Version:  "v1",
+	Resource: "kustomizations",
+}
+
 type KubeHelper struct {
 	client          *kubernetes.Clientset
 	kubeBadgeClient *versioned.Clientset
+	dynamicClient   dynamic.Interface // ADDED for Kustomization
 }
 
 func NewKubeHelper() *KubeHelper {
@@ -50,6 +61,13 @@ func (k *KubeHelper) Init() {
 		panic(err.Error())
 	}
 	k.kubeBadgeClient = kubeBadgeClient
+
+	// ADDED for Kustomization
+	dclient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		panic(err.Error())
+	}
+	k.dynamicClient = dclient
 
 	version, err := clientset.Discovery().ServerVersion()
 	if err != nil {
@@ -132,4 +150,28 @@ func (k *KubeHelper) GetPod(namespace string, name string) (*corev1.Pod, error) 
 	}
 
 	return pod, nil
+}
+
+// ADDED for Kustomization
+// Récupère la liste des kustomizations dans un namespace donné
+func (k *KubeHelper) GetKustomizations(namespace string) ([]map[string]interface{}, error) {
+	unstructuredList, err := k.dynamicClient.Resource(kustomizationGVR).Namespace(namespace).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	var results []map[string]interface{}
+	for _, item := range unstructuredList.Items {
+		results = append(results, item.Object)
+	}
+	return results, nil
+}
+
+// ADDED for Kustomization
+// Récupère une kustomization précise
+func (k *KubeHelper) GetKustomization(namespace, name string) (map[string]interface{}, error) {
+	unstr, err := k.dynamicClient.Resource(kustomizationGVR).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return unstr.Object, nil
 }

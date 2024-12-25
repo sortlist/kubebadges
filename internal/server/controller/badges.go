@@ -76,8 +76,7 @@ type BadgesController struct {
 	namespaceCache  *cache.Cache[string, BadgeMessage]
 	deploymentCache *cache.Cache[string, BadgeMessage]
 	nodeCache       *cache.Cache[string, BadgeMessage]
-	podCache        *cache.Cache[string, BadgeMessage]
-	// ADDED for Kustomization
+	podCache           *cache.Cache[string, BadgeMessage]
 	kustomizationCache *cache.Cache[string, BadgeMessage]
 }
 
@@ -90,7 +89,7 @@ func NewBadgesController(svc *svc.ServerContext) *BadgesController {
 		deploymentCache:    cache.NewCache[string, BadgeMessage](),
 		nodeCache:          cache.NewCache[string, BadgeMessage](),
 		podCache:           cache.NewCache[string, BadgeMessage](),
-		kustomizationCache: cache.NewCache[string, BadgeMessage](), // ADDED
+		kustomizationCache: cache.NewCache[string, BadgeMessage](),
 	}
 }
 
@@ -274,7 +273,6 @@ func (s *BadgesController) Pod(c *gin.Context) {
 	s.Success(c, s.KubeBadgesService, badgeMessage)
 }
 
-// ADDED for Kustomization
 func (s *BadgesController) Kustomization(c *gin.Context) {
 	namespace := c.Param("namespace")
 	kustomizationName := c.Param("kustomization")
@@ -288,7 +286,7 @@ func (s *BadgesController) Kustomization(c *gin.Context) {
 			return
 		}
 
-		// On va parser le .status.conditions pour voir si c'est "Ready"
+		// Parse .status.conditions to check if it's "Ready"
 		label := kustomizationName
 		message := "Unknown"
 		messageColor := badges.Blue

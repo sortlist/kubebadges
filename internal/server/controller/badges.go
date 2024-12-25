@@ -13,11 +13,6 @@ import (
 )
 
 // Success method removed since it's now in base.go
-		if len(kubeBadge.Spec.DisplayName) > 0 {
-			badgeMessage.Label = kubeBadge.Spec.DisplayName
-		}
-	}
-
 	badge := badges.NewBadgeBuilder().
 		SetLabel(badgeMessage.Label).
 		SetMessage(badgeMessage.Message).

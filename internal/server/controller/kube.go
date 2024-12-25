@@ -66,17 +66,17 @@ func (s *KubeController) ListNamespaces(c *gin.Context) {
 			})
 			return
 		}
-		result = make([]model.KubeBadges, len(namespaces))
-
-		for i, namespace := range namespaces {
-			result[i] = model.KubeBadges{
+		res := make([]model.KubeBadges, len(namespaces))
+		for i, ns := range namespaces {
+			res[i] = model.KubeBadges{
 				Kind:  "namespace",
-				Name:  namespace.Name,
-				Key:   fmt.Sprintf("/kube/namespace/%s", namespace.Name),
-				Badge: fmt.Sprintf("/badges/kube/namespace/%s", namespace.Name),
+				Name:  ns.Name,
+				Key:   fmt.Sprintf("/kube/namespace/%s", ns.Name),
+				Badge: fmt.Sprintf("/badges/kube/namespace/%s", ns.Name),
 			}
 		}
-		s.cache.Set("namespace", result, time.Minute*5)
+		result = res
+		s.cache.Set("namespaces", result, time.Minute*5)
 	}
 
 	c.JSON(http.StatusOK, s.populateKubeBadges(result))
@@ -95,16 +95,16 @@ func (s *KubeController) ListDeployments(c *gin.Context) {
 			return
 		}
 
-		result = make([]model.KubeBadges, len(deployments))
-
-		for i, deployment := range deployments {
-			result[i] = model.KubeBadges{
+		tmp := make([]model.KubeBadges, len(deployments))
+		for i, dep := range deployments {
+			tmp[i] = model.KubeBadges{
 				Kind:  "deployment",
-				Name:  deployment.Name,
-				Key:   fmt.Sprintf("/kube/deployment/%s/%s", namespace, deployment.Name),
-				Badge: fmt.Sprintf("/badges/kube/deployment/%s/%s", namespace, deployment.Name),
+				Name:  dep.Name,
+				Key:   fmt.Sprintf("/kube/deployment/%s/%s", namespace, dep.Name),
+				Badge: fmt.Sprintf("/badges/kube/deployment/%s/%s", namespace, dep.Name),
 			}
 		}
+		result = tmp
 		s.cache.Set(fmt.Sprintf("deployment_%s", namespace), result, time.Minute*2)
 	}
 
@@ -152,10 +152,9 @@ func (s *KubeController) UpdateBadge(c *gin.Context) {
 		return
 	}
 
-	// get kubebadge crd
 	kubeBadge, err := s.KubeBadgesService.GetKubeBadge(req.Key, true)
 	if err != nil {
-		// create kubebadge crd
+		// create kubebadge CRD
 		spec := s.KubeBadgesService.CreateKubeBadgesSpec()
 		spec.DisplayName = ""
 		spec.AliasURL = ""
@@ -171,7 +170,6 @@ func (s *KubeController) UpdateBadge(c *gin.Context) {
 		}
 	}
 
-	// update kubebadge crd
 	if req.Allowed != nil {
 		kubeBadge.Spec.Allowed = *req.Allowed
 	}
@@ -206,6 +204,10 @@ func (s *KubeController) parseKey(key string) (resourceType string, namespace st
 		name = segments[4]
 	case "pod":
 		resourceType = "pod"
+		namespace = segments[3]
+		name = segments[4]
+	case "kustomization": // ADDED
+		resourceType = "kustomization"
 		namespace = segments[3]
 		name = segments[4]
 	}
@@ -259,4 +261,36 @@ func (s *KubeController) mapToConfig(configMap map[string]string) *model.KubeBad
 	var config model.KubeBadgesConfig
 	_ = json.Unmarshal(jsonData, &config)
 	return &config
+}
+
+// ADDED for Kustomization listing
+func (s *KubeController) ListKustomizations(c *gin.Context) {
+	namespace := c.Param("namespace")
+	key := fmt.Sprintf("kustomizations_%s", namespace)
+
+	result, ok := s.cache.Get(key)
+	if !ok || c.Query("force") == "true" {
+		kustoms, err := s.KubeHelper.GetKustomizations(namespace)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		var out []model.KubeBadges
+		for _, obj := range kustoms {
+			metadata, _ := obj["metadata"].(map[string]interface{})
+			name, _ := metadata["name"].(string)
+			out = append(out, model.KubeBadges{
+				Kind:  "kustomization",
+				Name:  name,
+				Key:   fmt.Sprintf("/kube/kustomization/%s/%s", namespace, name),
+				Badge: fmt.Sprintf("/badges/kube/kustomization/%s/%s", namespace, name),
+			})
+		}
+		result = out
+		s.cache.Set(key, result, time.Minute*2)
+	}
+
+	c.JSON(http.StatusOK, s.populateKubeBadges(result))
 }

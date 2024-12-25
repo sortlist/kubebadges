@@ -34,20 +34,22 @@ class DefaultPage extends GetView<BadgeController> {
             children: [
               const Text("Select Namespace: "),
               const SizedBox(width: 8),
-              DropdownButton<KubeBadge>(
-                value: controller.selectedNamespace.value,
+              DropdownButton<String>(
+                value: controller.selectedNamespace.value?.name,
                 items: controller.namespaceList.keys.map((namespace) {
-                  return DropdownMenuItem<KubeBadge>(
-                    value: namespace,
+                  return DropdownMenuItem<String>(
+                    value: namespace.name,
                     child: Text(namespace.name),
                   );
                 }).toList(),
                 onChanged: (val) async {
                   if (val != null) {
-                    controller.selectedNamespace.value = val;
-                    var deployments = await controller.appService.listDeployments(val.name, false);
+                    final selectedBadge = controller.namespaceList.keys
+                        .firstWhere((badge) => badge.name == val);
+                    controller.selectedNamespace.value = selectedBadge;
+                    var deployments = await controller.appService.listDeployments(val, false);
                     if (!deployments.status.hasError && deployments.body!.isNotEmpty) {
-                      controller.namespaceList[val] = deployments.body!;
+                      controller.namespaceList[selectedBadge] = deployments.body!;
                       controller.refreshNamespaceList();
                     }
                   }

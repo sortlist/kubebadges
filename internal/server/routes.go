@@ -66,11 +66,11 @@ func serveFile(c *gin.Context, fs embed.FS, filePath, mineType string, mineTypeO
 }
 
 func (s *Server) initRouter() {
-	baseController := controller.BaseController{
+	baseCtrl := &controller.BaseController{
 		ServerContext: s.svcCtx,
 	}
 	kubeController := controller.NewKubeController(s.svcCtx)
-	badgesController := controller.NewBadgesController(s.svcCtx)
+	badgesController := controller.NewBadgesController(baseCtrl)
 
 	registerStaticFiles(s.internalEngine, kubebadges.WebFiles, "web")
 

@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kubebadges/kubebadges/internal/badges"
 	"github.com/kubebadges/kubebadges/internal/server/svc"
-	"github.com/kubebadges/kubebadges/internal/service"
 )
 
 var notFoundSvg = `
@@ -56,9 +55,8 @@ func (b *BaseController) NotFound(c *gin.Context) {
 	c.String(http.StatusNotFound, notFoundSvg)
 }
 
-func (b *BaseController) Success(c *gin.Context, kubeBadgesService *service.KubeBadgesService, badgeMessage BadgeMessage) {
-
-	if kubeBadge, err := kubeBadgesService.GetKubeBadge(badgeMessage.Key, false); err == nil {
+func (b *BaseController) Success(c *gin.Context, badgeMessage BadgeMessage) {
+	if kubeBadge, err := b.KubeBadgesService.GetKubeBadge(badgeMessage.Key, false); err == nil {
 		if len(kubeBadge.Spec.DisplayName) > 0 {
 			badgeMessage.Label = kubeBadge.Spec.DisplayName
 		}

@@ -9,7 +9,7 @@ class GeneratorPage extends GetView<GeneratorController> {
 
   @override
   Widget build(BuildContext context) {
-    // On wrap dans un SingleChildScrollView si besoin
+    // Wrap in SingleChildScrollView if needed
     return SingleChildScrollView(
       child: Obx(
         () => Column(
@@ -37,7 +37,7 @@ class GeneratorPage extends GetView<GeneratorController> {
                   onChanged: (val) {
                     if (val != null) {
                       controller.resourceType.value = val;
-                      // si on change le resource type, on recharge
+                      // reload when resource type changes
                       controller.loadResources();
                     }
                   },
@@ -83,7 +83,7 @@ class GeneratorPage extends GetView<GeneratorController> {
               }).toList(),
               onChanged: (val) {
                 if (val != null) {
-                  // on trouve le KubeBadge correspondant
+                  // find the corresponding KubeBadge
                   final found = controller.resourceList.firstWhereOrNull((x) => x.name == val);
                   controller.selectedItem.value = found;
                 }

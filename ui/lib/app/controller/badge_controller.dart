@@ -15,6 +15,8 @@ class BadgeController extends GetxController {
   set namespaceList(Map<KubeBadge, List<KubeBadge>> value) =>
       _namespaceList.value = value;
 
+  final selectedNamespace = Rxn<KubeBadge>();
+
   void refreshNamespaceList() {
     _namespaceList.refresh();
   }

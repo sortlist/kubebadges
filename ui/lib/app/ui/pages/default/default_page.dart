@@ -30,23 +30,37 @@ class DefaultPage extends GetView<BadgeController> {
             ),
           ),
           const CardTitle(title: "Deployments"),
-          Obx(
-            () => ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: controller.namespaceList.length,
-              itemBuilder: (context, index) {
-                var namespace =
-                    controller.namespaceList.entries.elementAt(index);
-                return BadgeCard(
-                  items: namespace.value,
-                  kubeBadge: namespace.key,
-                  onTap: (e) async {
-                    var deployments = await controller.appService.listDeployments(namespace.key.name, false);
+          Obx(() => Row(
+            children: [
+              const Text("Select Namespace: "),
+              const SizedBox(width: 8),
+              DropdownButton<KubeBadge>(
+                value: controller.selectedNamespace.value,
+                items: controller.namespaceList.keys.map((namespace) {
+                  return DropdownMenuItem<KubeBadge>(
+                    value: namespace,
+                    child: Text(namespace.name),
+                  );
+                }).toList(),
+                onChanged: (val) async {
+                  if (val != null) {
+                    controller.selectedNamespace.value = val;
+                    var deployments = await controller.appService.listDeployments(val.name, false);
                     if (!deployments.status.hasError && deployments.body!.isNotEmpty) {
-                      controller.namespaceList[namespace.key] = deployments.body!;
+                      controller.namespaceList[val] = deployments.body!;
                       controller.refreshNamespaceList();
                     }
+                  }
+                },
+                hint: const Text("Choose a namespace"),
+              ),
+            ],
+          )),
+          Obx(() => controller.selectedNamespace.value != null
+              ? BadgeCard(
+                  items: controller.namespaceList[controller.selectedNamespace.value] ?? [],
+                  kubeBadge: controller.selectedNamespace.value,
+                  onTap: (e) {
                     showDialog(
                       context: context,
                       builder: (BuildContext context) {
@@ -54,10 +68,8 @@ class DefaultPage extends GetView<BadgeController> {
                       },
                     );
                   },
-                );
-              },
-            ),
-          ),
+                )
+              : const SizedBox()),
         ],
       ),
     );

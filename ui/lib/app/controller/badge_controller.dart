@@ -15,6 +15,10 @@ class BadgeController extends GetxController {
   set namespaceList(Map<KubeBadge, List<KubeBadge>> value) =>
       _namespaceList.value = value;
 
+  void refreshNamespaceList() {
+    _namespaceList.refresh();
+  }
+
   BadgeController() {
     loadData(false);
   }

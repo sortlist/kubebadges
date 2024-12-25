@@ -17,8 +17,7 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-// ADDED for Kustomization
-// GVR pour kustomizations FluxCD
+// GVR for FluxCD kustomizations
 var kustomizationGVR = schema.GroupVersionResource{
 	Group:    "kustomize.toolkit.fluxcd.io",
 	Version:  "v1",
@@ -28,7 +27,7 @@ var kustomizationGVR = schema.GroupVersionResource{
 type KubeHelper struct {
 	client          *kubernetes.Clientset
 	kubeBadgeClient *versioned.Clientset
-	dynamicClient   dynamic.Interface // ADDED for Kustomization
+	dynamicClient   dynamic.Interface
 }
 
 func NewKubeHelper() *KubeHelper {
@@ -62,7 +61,6 @@ func (k *KubeHelper) Init() {
 	}
 	k.kubeBadgeClient = kubeBadgeClient
 
-	// ADDED for Kustomization
 	dclient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		panic(err.Error())
@@ -152,8 +150,7 @@ func (k *KubeHelper) GetPod(namespace string, name string) (*corev1.Pod, error) 
 	return pod, nil
 }
 
-// ADDED for Kustomization
-// Récupère la liste des kustomizations dans un namespace donné
+// Get the list of kustomizations in a given namespace
 func (k *KubeHelper) GetKustomizations(namespace string) ([]map[string]interface{}, error) {
 	unstructuredList, err := k.dynamicClient.Resource(kustomizationGVR).Namespace(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
@@ -166,8 +163,7 @@ func (k *KubeHelper) GetKustomizations(namespace string) ([]map[string]interface
 	return results, nil
 }
 
-// ADDED for Kustomization
-// Récupère une kustomization précise
+// Get a specific kustomization
 func (k *KubeHelper) GetKustomization(namespace, name string) (map[string]interface{}, error) {
 	unstr, err := k.dynamicClient.Resource(kustomizationGVR).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {

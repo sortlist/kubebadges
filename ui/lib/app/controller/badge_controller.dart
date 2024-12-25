@@ -17,8 +17,19 @@ class BadgeController extends GetxController {
 
   final selectedNamespace = Rxn<KubeBadge>();
 
+  final _kustomizationNamespaceList = <KubeBadge, List<KubeBadge>>{}.obs;
+  Map<KubeBadge, List<KubeBadge>> get kustomizationNamespaceList => _kustomizationNamespaceList;
+  set kustomizationNamespaceList(Map<KubeBadge, List<KubeBadge>> value) =>
+      _kustomizationNamespaceList.value = value;
+
+  final selectedKustomizationNamespace = Rxn<KubeBadge>();
+
   void refreshNamespaceList() {
     _namespaceList.refresh();
+  }
+
+  void refreshKustomizationNamespaceList() {
+    _kustomizationNamespaceList.refresh();
   }
 
   BadgeController() {
@@ -41,10 +52,12 @@ class BadgeController extends GetxController {
   void listNamespace(bool force) async {
     EasyLoading.show(status: 'Loading...');
     namespaceList.clear();
+    kustomizationNamespaceList.clear();
     var namespaces = await appService.listNamespace(force);
     if (!namespaces.status.hasError) {
       for (var namespace in namespaces.body!) {
         namespaceList[namespace] = [];
+        kustomizationNamespaceList[namespace] = [];
       }
     }
     EasyLoading.dismiss();

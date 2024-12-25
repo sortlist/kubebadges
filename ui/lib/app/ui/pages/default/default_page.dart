@@ -72,6 +72,49 @@ class DefaultPage extends GetView<BadgeController> {
                   },
                 )
               : const SizedBox()),
+          const CardTitle(title: "Kustomizations"),
+          Obx(() => Row(
+            children: [
+              const Text("Select Namespace: "),
+              const SizedBox(width: 8),
+              DropdownButton<String>(
+                value: controller.selectedKustomizationNamespace.value?.name,
+                items: controller.kustomizationNamespaceList.keys.map((namespace) {
+                  return DropdownMenuItem<String>(
+                    value: namespace.name,
+                    child: Text(namespace.name),
+                  );
+                }).toList(),
+                onChanged: (val) async {
+                  if (val != null) {
+                    final selectedBadge = controller.kustomizationNamespaceList.keys
+                        .firstWhere((badge) => badge.name == val);
+                    controller.selectedKustomizationNamespace.value = selectedBadge;
+                    var kustomizations = await controller.appService.listKustomizations(val, false);
+                    if (!kustomizations.status.hasError && kustomizations.body!.isNotEmpty) {
+                      controller.kustomizationNamespaceList[selectedBadge] = kustomizations.body!;
+                      controller.refreshKustomizationNamespaceList();
+                    }
+                  }
+                },
+                hint: const Text("Choose a namespace"),
+              ),
+            ],
+          )),
+          Obx(() => controller.selectedKustomizationNamespace.value != null
+              ? BadgeCard(
+                  items: controller.kustomizationNamespaceList[controller.selectedKustomizationNamespace.value] ?? [],
+                  kubeBadge: controller.selectedKustomizationNamespace.value,
+                  onTap: (e) {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return BadgeSettingDialog(kubeBadge: e);
+                      },
+                    );
+                  },
+                )
+              : const SizedBox()),
         ],
       ),
     );

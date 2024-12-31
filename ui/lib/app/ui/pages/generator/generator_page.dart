@@ -47,9 +47,10 @@ class GeneratorPage extends GetView<GeneratorController> {
             ),
             const SizedBox(height: 16),
 
-            // Si ResourceType == deployment ou kustomization, on a besoin d'un namespace
+            // Si ResourceType == deployment, kustomization ou postgresql, on a besoin d'un namespace
             if (controller.resourceType.value == ResourceType.deployment ||
-                controller.resourceType.value == ResourceType.kustomization) ...[
+                controller.resourceType.value == ResourceType.kustomization ||
+                controller.resourceType.value == ResourceType.postgresql) ...[
               const Text("Select Namespace:"),
               const SizedBox(height: 8),
               DropdownButton<String>(

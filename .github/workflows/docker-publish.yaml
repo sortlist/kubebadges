@@ -3,6 +3,7 @@ name: Build and Push Docker Image
 on:
   push:
     branches: [ "main" ]
+    tags: [ 'v*.*.*' ]
   pull_request:
 
 jobs:
@@ -33,4 +34,6 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/kubebadges:latest
+          tags: |
+            ${{ secrets.DOCKER_HUB_USERNAME }}/kubebadges:latest
+            ${{ secrets.DOCKER_HUB_USERNAME }}/kubebadges:${{ github.ref_name }}

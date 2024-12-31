@@ -97,6 +97,7 @@ func (s *Server) initRouter() {
 
 		// List Kustomizations (optional)
 		api.GET("/kustomizations/:namespace", kubeController.ListKustomizations)
+		api.GET("/postgresqls/:namespace", kubeController.ListPostgresqls)
 	}
 
 	badges := s.internalEngine.Group("/badges")

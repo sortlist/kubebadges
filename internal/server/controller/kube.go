@@ -263,6 +263,37 @@ func (s *KubeController) mapToConfig(configMap map[string]string) *model.KubeBad
 	return &config
 }
 
+func (s *KubeController) ListPostgresqls(c *gin.Context) {
+	namespace := c.Param("namespace")
+	key := fmt.Sprintf("postgresql_%s", namespace)
+
+	result, ok := s.cache.Get(key)
+	if !ok || c.Query("force") == "true" {
+		postgresqls, err := s.KubeHelper.GetPostgresqls(namespace)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		var out []model.KubeBadges
+		for _, obj := range postgresqls {
+			metadata, _ := obj["metadata"].(map[string]interface{})
+			name, _ := metadata["name"].(string)
+			out = append(out, model.KubeBadges{
+				Kind:  "postgresql",
+				Name:  name,
+				Key:   fmt.Sprintf("/kube/postgresql/%s/%s", namespace, name),
+				Badge: fmt.Sprintf("/badges/kube/postgresql/%s/%s", namespace, name),
+			})
+		}
+		result = out
+		s.cache.Set(key, result, time.Minute*2)
+	}
+
+	c.JSON(http.StatusOK, s.populateKubeBadges(result))
+}
+
 func (s *KubeController) ListKustomizations(c *gin.Context) {
 	namespace := c.Param("namespace")
 	key := fmt.Sprintf("kustomizations_%s", namespace)

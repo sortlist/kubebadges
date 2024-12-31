@@ -56,4 +56,10 @@ class Api extends GetConnect {
       return (data as List).map((item) => KubeBadge.fromJson(item)).toList();
     });
   }
+
+  Future<Response<List<KubeBadge>>> listJobs(String namespace, bool force) {
+    return get('/api/jobs/$namespace?force=$force', decoder: (data) {
+      return (data as List).map((item) => KubeBadge.fromJson(item)).toList();
+    });
+  }
 }

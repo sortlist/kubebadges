@@ -201,3 +201,19 @@ func (k *KubeHelper) GetPostgresql(namespace, name string) (map[string]interface
 	}
 	return unstr.Object, nil
 }
+
+func (k *KubeHelper) GetJobs(namespace string) ([]batchv1.Job, error) {
+	jobs, err := k.client.BatchV1().Jobs(namespace).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return jobs.Items, nil
+}
+
+func (k *KubeHelper) GetJob(namespace string, name string) (*batchv1.Job, error) {
+	job, err := k.client.BatchV1().Jobs(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return job, nil
+}

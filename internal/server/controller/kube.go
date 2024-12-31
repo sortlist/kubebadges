@@ -263,6 +263,35 @@ func (s *KubeController) mapToConfig(configMap map[string]string) *model.KubeBad
 	return &config
 }
 
+func (s *KubeController) ListJobs(c *gin.Context) {
+	namespace := c.Param("namespace")
+	key := fmt.Sprintf("jobs_%s", namespace)
+
+	result, ok := s.cache.Get(key)
+	if !ok || c.Query("force") == "true" {
+		jobs, err := s.KubeHelper.GetJobs(namespace)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		var out []model.KubeBadges
+		for _, job := range jobs {
+			out = append(out, model.KubeBadges{
+				Kind:  "job",
+				Name:  job.Name,
+				Key:   fmt.Sprintf("/kube/job/%s/%s", namespace, job.Name),
+				Badge: fmt.Sprintf("/badges/kube/job/%s/%s", namespace, job.Name),
+			})
+		}
+		result = out
+		s.cache.Set(key, result, time.Minute*2)
+	}
+
+	c.JSON(http.StatusOK, s.populateKubeBadges(result))
+}
+
 func (s *KubeController) ListPostgresqls(c *gin.Context) {
 	namespace := c.Param("namespace")
 	key := fmt.Sprintf("postgresql_%s", namespace)

@@ -22,6 +22,7 @@ type BadgesController struct {
 	podCache           *cache.Cache[string, BadgeMessage]
 	kustomizationCache *cache.Cache[string, BadgeMessage]
 	postgresqlCache    *cache.Cache[string, BadgeMessage]
+	jobCache           *cache.Cache[string, BadgeMessage]
 }
 
 func NewBadgesController(base *BaseController) *BadgesController {
@@ -211,6 +212,47 @@ func (s *BadgesController) Pod(c *gin.Context) {
 		}
 
 		s.podCache.Set(fmt.Sprintf("%s_%s", namespace, podName), badgeMessage, s.getCacheDuration())
+	}
+
+	s.Success(c, badgeMessage)
+}
+
+func (s *BadgesController) Job(c *gin.Context) {
+	namespace := c.Param("namespace")
+	jobName := c.Param("job")
+
+	key := fmt.Sprintf("/kube/job/%s/%s", namespace, jobName)
+	badgeMessage, ok := s.jobCache.Get(key)
+	if !ok {
+		job, err := s.KubeHelper.GetJob(namespace, jobName)
+		if err != nil {
+			s.NotFound(c)
+			return
+		}
+
+		label := jobName
+		message := "Unknown"
+		messageColor := badges.Blue
+
+		if job.Status.Succeeded > 0 {
+			message = "Succeeded"
+			messageColor = badges.Green
+		} else if job.Status.Failed > 0 {
+			message = "Failed"
+			messageColor = badges.Red
+		} else if job.Status.Active > 0 {
+			message = "Active"
+			messageColor = badges.Yellow
+		}
+
+		badgeMessage = BadgeMessage{
+			Key:          key,
+			Label:        label,
+			Message:      message,
+			MessageColor: messageColor,
+		}
+
+		s.jobCache.Set(key, badgeMessage, s.getCacheDuration())
 	}
 
 	s.Success(c, badgeMessage)

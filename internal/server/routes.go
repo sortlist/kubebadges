@@ -98,6 +98,7 @@ func (s *Server) initRouter() {
 		// List Kustomizations (optional)
 		api.GET("/kustomizations/:namespace", kubeController.ListKustomizations)
 		api.GET("/postgresqls/:namespace", kubeController.ListPostgresqls)
+		api.GET("/jobs/:namespace", kubeController.ListJobs)
 	}
 
 	badges := s.internalEngine.Group("/badges")
@@ -110,6 +111,7 @@ func (s *Server) initRouter() {
 
 		badges.GET("/kube/kustomization/:namespace/:kustomization", badgesController.Kustomization)
 		badges.GET("/kube/postgresql/:namespace/:postgresql", badgesController.Postgresql)
+		badges.GET("/kube/job/:namespace/:job", badgesController.Job)
 	}
 
 	// for external api

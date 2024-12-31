@@ -34,6 +34,7 @@ func NewBadgesController(base *BaseController) *BadgesController {
 		podCache:           cache.NewCache[string, BadgeMessage](),
 		kustomizationCache: cache.NewCache[string, BadgeMessage](),
 		postgresqlCache:    cache.NewCache[string, BadgeMessage](),
+		jobCache:           cache.NewCache[string, BadgeMessage](),
 	}
 }
 

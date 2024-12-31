@@ -47,7 +47,7 @@ class GeneratorPage extends GetView<GeneratorController> {
             ),
             const SizedBox(height: 16),
 
-            // Si ResourceType == deployment, kustomization ou postgresql, on a besoin d'un namespace
+            // If ResourceType is deployment, kustomization or postgresql, we need a namespace
             if (controller.resourceType.value == ResourceType.deployment ||
                 controller.resourceType.value == ResourceType.kustomization ||
                 controller.resourceType.value == ResourceType.postgresql) ...[

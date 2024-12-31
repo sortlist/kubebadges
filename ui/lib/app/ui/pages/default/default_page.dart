@@ -158,6 +158,49 @@ class DefaultPage extends GetView<BadgeController> {
                   },
                 )
               : const SizedBox()),
+          const CardTitle(title: "Jobs"),
+          Obx(() => Row(
+            children: [
+              const Text("Select Namespace: "),
+              const SizedBox(width: 8),
+              DropdownButton<String>(
+                value: controller.selectedJobNamespace.value?.name,
+                items: controller.jobNamespaceList.keys.map((namespace) {
+                  return DropdownMenuItem<String>(
+                    value: namespace.name,
+                    child: Text(namespace.name),
+                  );
+                }).toList(),
+                onChanged: (val) async {
+                  if (val != null) {
+                    final selectedBadge = controller.jobNamespaceList.keys
+                        .firstWhere((badge) => badge.name == val);
+                    controller.selectedJobNamespace.value = selectedBadge;
+                    var jobs = await controller.appService.listJobs(val, false);
+                    if (!jobs.status.hasError && jobs.body!.isNotEmpty) {
+                      controller.jobNamespaceList[selectedBadge] = jobs.body!;
+                      controller.refreshJobNamespaceList();
+                    }
+                  }
+                },
+                hint: const Text("Choose a namespace"),
+              ),
+            ],
+          )),
+          Obx(() => controller.selectedJobNamespace.value != null
+              ? BadgeCard(
+                  items: controller.jobNamespaceList[controller.selectedJobNamespace.value] ?? [],
+                  kubeBadge: controller.selectedJobNamespace.value,
+                  onTap: (e) {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return BadgeSettingDialog(kubeBadge: e);
+                      },
+                    );
+                  },
+                )
+              : const SizedBox()),
         ],
       ),
     );

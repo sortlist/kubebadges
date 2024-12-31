@@ -7,6 +7,7 @@ enum ResourceType {
   node,
   deployment,
   kustomization,
+  postgresql,
   // more can be added
 }
 
@@ -54,6 +55,12 @@ class GeneratorController extends GetxController {
     } else if (resourceType.value == ResourceType.kustomization) {
       if (namespace.value.isEmpty) return;
       final resp = await appService.listKustomizations(namespace.value, false);
+      if (!resp.status.hasError) {
+        resourceList.assignAll(resp.body!);
+      }
+    } else if (resourceType.value == ResourceType.postgresql) {
+      if (namespace.value.isEmpty) return;
+      final resp = await appService.listPostgresqls(namespace.value, false);
       if (!resp.status.hasError) {
         resourceList.assignAll(resp.body!);
       }

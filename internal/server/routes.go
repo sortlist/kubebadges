@@ -108,6 +108,7 @@ func (s *Server) initRouter() {
 		badges.GET("/kube/pod/:namespace/:pod", badgesController.Pod)
 
 		badges.GET("/kube/kustomization/:namespace/:kustomization", badgesController.Kustomization)
+		badges.GET("/kube/postgresql/:namespace/:postgresql", badgesController.Postgresql)
 	}
 
 	// for external api

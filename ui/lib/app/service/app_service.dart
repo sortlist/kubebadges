@@ -77,4 +77,7 @@ class AppService extends GetxService {
 
   Future<Response<List<KubeBadge>>> listKustomizations(String namespace, bool force) =>
       api.listKustomizations(namespace, force);
+
+  Future<Response<List<KubeBadge>>> listPostgresqls(String namespace, bool force) =>
+      api.listPostgresqls(namespace, force);
 }

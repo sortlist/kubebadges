@@ -21,6 +21,7 @@ type BadgesController struct {
 	nodeCache       *cache.Cache[string, BadgeMessage]
 	podCache           *cache.Cache[string, BadgeMessage]
 	kustomizationCache *cache.Cache[string, BadgeMessage]
+	postgresqlCache    *cache.Cache[string, BadgeMessage]
 }
 
 func NewBadgesController(base *BaseController) *BadgesController {
@@ -31,6 +32,7 @@ func NewBadgesController(base *BaseController) *BadgesController {
 		nodeCache:          cache.NewCache[string, BadgeMessage](),
 		podCache:           cache.NewCache[string, BadgeMessage](),
 		kustomizationCache: cache.NewCache[string, BadgeMessage](),
+		postgresqlCache:    cache.NewCache[string, BadgeMessage](),
 	}
 }
 
@@ -209,6 +211,50 @@ func (s *BadgesController) Pod(c *gin.Context) {
 		}
 
 		s.podCache.Set(fmt.Sprintf("%s_%s", namespace, podName), badgeMessage, s.getCacheDuration())
+	}
+
+	s.Success(c, badgeMessage)
+}
+
+func (s *BadgesController) Postgresql(c *gin.Context) {
+	namespace := c.Param("namespace")
+	postgresqlName := c.Param("postgresql")
+
+	key := fmt.Sprintf("/kube/postgresql/%s/%s", namespace, postgresqlName)
+	badgeMessage, ok := s.postgresqlCache.Get(key)
+	if !ok {
+		postgresql, err := s.KubeHelper.GetPostgresql(namespace, postgresqlName)
+		if err != nil {
+			s.NotFound(c)
+			return
+		}
+
+		label := postgresqlName
+		message := "Unknown"
+		messageColor := badges.Blue
+
+		if status, ok := postgresql["status"].(map[string]interface{}); ok {
+			if clusterStatus, exists := status["PostgresClusterStatus"].(string); exists {
+				message = clusterStatus
+				switch clusterStatus {
+				case "Running":
+					messageColor = badges.Green
+				case "Creating":
+					messageColor = badges.Yellow
+				default:
+					messageColor = badges.Red
+				}
+			}
+		}
+
+		badgeMessage = BadgeMessage{
+			Key:          key,
+			Label:        label,
+			Message:      message,
+			MessageColor: messageColor,
+		}
+
+		s.postgresqlCache.Set(key, badgeMessage, s.getCacheDuration())
 	}
 
 	s.Success(c, badgeMessage)

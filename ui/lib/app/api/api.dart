@@ -50,4 +50,10 @@ class Api extends GetConnect {
       return (data as List).map((item) => KubeBadge.fromJson(item)).toList();
     });
   }
+
+  Future<Response<List<KubeBadge>>> listPostgresqls(String namespace, bool force) {
+    return get('/api/postgresqls/$namespace?force=$force', decoder: (data) {
+      return (data as List).map((item) => KubeBadge.fromJson(item)).toList();
+    });
+  }
 }

@@ -18,11 +18,19 @@ import (
 )
 
 // GVR for FluxCD kustomizations
-var kustomizationGVR = schema.GroupVersionResource{
-	Group:    "kustomize.toolkit.fluxcd.io",
-	Version:  "v1",
-	Resource: "kustomizations",
-}
+var (
+	kustomizationGVR = schema.GroupVersionResource{
+		Group:    "kustomize.toolkit.fluxcd.io",
+		Version:  "v1",
+		Resource: "kustomizations",
+	}
+	
+	postgresqlGVR = schema.GroupVersionResource{
+		Group:    "acid.zalan.do",
+		Version:  "v1",
+		Resource: "postgresqls",
+	}
+)
 
 type KubeHelper struct {
 	client          *kubernetes.Clientset
@@ -166,6 +174,28 @@ func (k *KubeHelper) GetKustomizations(namespace string) ([]map[string]interface
 // Get a specific kustomization
 func (k *KubeHelper) GetKustomization(namespace, name string) (map[string]interface{}, error) {
 	unstr, err := k.dynamicClient.Resource(kustomizationGVR).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return unstr.Object, nil
+}
+
+// Get the list of PostgreSQL instances in a given namespace
+func (k *KubeHelper) GetPostgresqls(namespace string) ([]map[string]interface{}, error) {
+	unstructuredList, err := k.dynamicClient.Resource(postgresqlGVR).Namespace(namespace).List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	var results []map[string]interface{}
+	for _, item := range unstructuredList.Items {
+		results = append(results, item.Object)
+	}
+	return results, nil
+}
+
+// Get a specific PostgreSQL instance
+func (k *KubeHelper) GetPostgresql(namespace, name string) (map[string]interface{}, error) {
+	unstr, err := k.dynamicClient.Resource(postgresqlGVR).Namespace(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

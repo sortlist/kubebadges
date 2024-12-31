@@ -24,12 +24,23 @@ class BadgeController extends GetxController {
 
   final selectedKustomizationNamespace = Rxn<KubeBadge>();
 
+  final _postgresqlNamespaceList = <KubeBadge, List<KubeBadge>>{}.obs;
+  Map<KubeBadge, List<KubeBadge>> get postgresqlNamespaceList => _postgresqlNamespaceList;
+  set postgresqlNamespaceList(Map<KubeBadge, List<KubeBadge>> value) =>
+      _postgresqlNamespaceList.value = value;
+
+  final selectedPostgresqlNamespace = Rxn<KubeBadge>();
+
   void refreshNamespaceList() {
     _namespaceList.refresh();
   }
 
   void refreshKustomizationNamespaceList() {
     _kustomizationNamespaceList.refresh();
+  }
+
+  void refreshPostgresqlNamespaceList() {
+    _postgresqlNamespaceList.refresh();
   }
 
   BadgeController() {
@@ -53,11 +64,13 @@ class BadgeController extends GetxController {
     EasyLoading.show(status: 'Loading...');
     namespaceList.clear();
     kustomizationNamespaceList.clear();
+    postgresqlNamespaceList.clear();
     var namespaces = await appService.listNamespace(force);
     if (!namespaces.status.hasError) {
       for (var namespace in namespaces.body!) {
         namespaceList[namespace] = [];
         kustomizationNamespaceList[namespace] = [];
+        postgresqlNamespaceList[namespace] = [];
       }
     }
     EasyLoading.dismiss();

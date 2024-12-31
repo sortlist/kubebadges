@@ -115,6 +115,49 @@ class DefaultPage extends GetView<BadgeController> {
                   },
                 )
               : const SizedBox()),
+          const CardTitle(title: "PostgreSQL"),
+          Obx(() => Row(
+            children: [
+              const Text("Select Namespace: "),
+              const SizedBox(width: 8),
+              DropdownButton<String>(
+                value: controller.selectedPostgresqlNamespace.value?.name,
+                items: controller.postgresqlNamespaceList.keys.map((namespace) {
+                  return DropdownMenuItem<String>(
+                    value: namespace.name,
+                    child: Text(namespace.name),
+                  );
+                }).toList(),
+                onChanged: (val) async {
+                  if (val != null) {
+                    final selectedBadge = controller.postgresqlNamespaceList.keys
+                        .firstWhere((badge) => badge.name == val);
+                    controller.selectedPostgresqlNamespace.value = selectedBadge;
+                    var postgresqls = await controller.appService.listPostgresqls(val, false);
+                    if (!postgresqls.status.hasError && postgresqls.body!.isNotEmpty) {
+                      controller.postgresqlNamespaceList[selectedBadge] = postgresqls.body!;
+                      controller.refreshPostgresqlNamespaceList();
+                    }
+                  }
+                },
+                hint: const Text("Choose a namespace"),
+              ),
+            ],
+          )),
+          Obx(() => controller.selectedPostgresqlNamespace.value != null
+              ? BadgeCard(
+                  items: controller.postgresqlNamespaceList[controller.selectedPostgresqlNamespace.value] ?? [],
+                  kubeBadge: controller.selectedPostgresqlNamespace.value,
+                  onTap: (e) {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return BadgeSettingDialog(kubeBadge: e);
+                      },
+                    );
+                  },
+                )
+              : const SizedBox()),
         ],
       ),
     );

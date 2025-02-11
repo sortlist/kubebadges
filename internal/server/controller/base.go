@@ -47,7 +47,7 @@ func (b *BaseController) NotFound(c *gin.Context) {
 	resultType := c.DefaultQuery("type", "svg")
 	if resultType == "json" {
 		c.Header("Content-Type", "application/json")
-		c.AbortWithStatus(http.StatusNotFound)
+		c.AbortWithStatus(http.StatusOK)
 		return
 	}
 

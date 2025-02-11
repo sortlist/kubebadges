@@ -210,6 +210,10 @@ func (s *KubeController) parseKey(key string) (resourceType string, namespace st
 		resourceType = "kustomization"
 		namespace = segments[3]
 		name = segments[4]
+	case "job":
+		resourceType = "job"
+		namespace = segments[3]
+		name = segments[4]
 	}
 
 	return

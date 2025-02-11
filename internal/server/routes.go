@@ -127,5 +127,6 @@ func (s *Server) initRouter() {
 		exBadges.GET("/kube/pod/:namespace/:pod", badgesController.Pod)
 
 		exBadges.GET("/kube/kustomization/:namespace/:kustomization", badgesController.Kustomization)
+		exBadges.GET("/kube/job/:namespace/:job", badgesController.Job)
 	}
 }

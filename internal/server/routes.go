@@ -51,7 +51,7 @@ func registerFile(router *gin.Engine, fs embed.FS, root, fileName string) {
 	}
 
 	router.GET("/"+strings.TrimPrefix(filePath, "web/"), func(c *gin.Context) {
-		c.Header("Cache-Control", "public, max-age=300")
+		c.Header("Cache-Control", "private, max-age=0, no-cache")
 		serveFile(c, fs, filePath, mineType, mineTypeOK)
 	})
 }

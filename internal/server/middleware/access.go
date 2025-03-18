@@ -39,6 +39,7 @@ func BadgeApiAccessMiddleware(kubeService KubeBadgeService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		c.Header("X-App-Name", "KubeBadge")
+		c.Header("Cache-Control", "private, max-age=0, no-cache")
 
 		if !strings.HasPrefix(c.Request.URL.Path, "/badges") {
 			c.Header("Content-Type", "image/svg+xml")

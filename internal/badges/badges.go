@@ -62,7 +62,7 @@ func (b *BadgesHelper) CreateBadgeProxy(badge *BadgeBuilder, c *gin.Context) {
 			req.URL = badgeURL
 		},
 		ModifyResponse: func(resp *http.Response) error {
-			resp.Header.Set("Cache-Control", fmt.Sprintf("max-age=%d, s-maxage=%d", b.cacheTime, b.cacheTime))
+			resp.Header.Set("Cache-Control", "private, max-age=0, no-cache")
 			return nil
 		},
 	}

@@ -20,7 +20,11 @@ func (k *KubeHelper) kubebadge() typev1.KubeBadgeInterface {
 
 func (k *KubeHelper) GenerateKubeName(name string) string {
 	name = strings.TrimPrefix(name, "/")
-	return strings.ReplaceAll(name, "/", "-")
+	name = strings.ReplaceAll(name, "/", "-")
+	if len(name) > 63 {
+		name = name[:63] // Truncate to 63 characters
+	}
+	return name
 }
 
 func (k *KubeHelper) NewKubeBadgeSpec() v1.KubeBadgeSpec {
